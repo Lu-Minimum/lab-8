@@ -31,6 +31,77 @@ size_t Size(void* ptr)
 // extraMemoryAllocated counts bytes of extra memory allocated
 void mergeSort(int pData[], int l, int r)
 {
+	//Check for size 1, invalid, or null
+	if (r-l<1||pData==NULL) {
+		return;
+	}
+	if (r-l==1) {
+		//If theres only 2, just compare and swap
+		if (pData[l]>pData[r]) {
+			int temp = pData[l];
+			pData[l] = pData[r];
+			pData[r] = temp;
+		}
+		return;
+	}
+	int mid = (l+r)/2;
+
+	//Recursively call mergeSort
+	mergeSort(pData, l, mid);
+	//Don't need to recurse on size 1 half
+	if (r-l>2) {
+		mergeSort(pData, mid+1, r);
+	}
+
+	//Check if already sorted (largest element in first half less than smallest in second half)
+	if (pData[mid]<pData[mid+1]){
+		return;
+	}
+
+	//Merge
+	int* tempArr = (int*)Alloc((1+r-l)*sizeof(int));
+	//Current indicies in first and second half
+	int c1 = l, c2 = mid+1;
+
+	for (int i = 0; i<=r-l; i++) {
+		if (c1>mid) {
+			if (c2>r) {
+				//This shouldn't happen, but if it does I don't want garbage data
+				tempArr[i] = 0;
+				printf("Couldn't find data to merge, added a zero.\n");
+				continue;
+			}
+			tempArr[i] = pData[c2];
+			c2++;
+			continue;
+		}
+		if (c2>r) {
+			tempArr[i] = pData[c1];
+			c1++;
+			continue;
+		}
+
+		if (pData[c1]<=pData[c2]) {
+			tempArr[i] = pData[c1];
+			c1++;
+		} else {
+			tempArr[i] = pData[c2];
+			c2++;
+		}
+	}
+
+	//Reuse c1 as current index when copying tempArr to pData
+	c1 = l;
+	for (int i = 0; i<=r-l; i++) {
+		if (c1>r) {
+			break;
+		}
+		pData[c1] = tempArr[i];
+		c1++;
+	}
+
+	//Dealloc
+	DeAlloc(tempArr);
 }
 
 // parses input file to an integer array
@@ -65,16 +136,18 @@ int parseData(char *inputFileName, int **ppData)
 }
 
 // prints first and last 100 items in the data array
+//Updated according to TA instructions
 void printArray(int pData[], int dataSz)
 {
-	int i, sz = dataSz - 100;
+	int i, sz = (dataSz > 100 ? dataSz - 100 : 0);
+	int firstHundred = (dataSz < 100 ? dataSz : 100);
 	printf("\tData:\n\t");
-	for (i=0;i<100;++i)
+	for (i=0;i<firstHundred;++i)
 	{
 		printf("%d ",pData[i]);
 	}
 	printf("\n\t");
-	
+	if (dataSz > 100)
 	for (i=sz;i<dataSz;++i)
 	{
 		printf("%d ",pData[i]);
